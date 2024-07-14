@@ -1,2 +1,43 @@
 // SPDX-License-Identifier: GPL-2.0
 #include "arm/broadcom/bcm2712-rpi-5-b.dts"
+
+/ {
+	scmi_shm: scp-shmem@3fc0000 {
+		compatible = "arm,scmi-shmem";
+		reg = <0x0 0x3fc0000 0x1000>;
+	};
+
+	firmware {
+		scmi {
+			compatible = "arm,scmi-smc";
+			arm,smc-id = <0x82000002>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			shmem = <&scmi_shm>;
+
+			scmi_reset: protocol@16 {
+				reg = <0x16>;
+				#reset-cells = <1>;
+			};
+
+			scmi_clk: protocol@14 {
+				reg = <0x14>;
+				#clock-cells = <1>;
+			};
+		};
+	};
+};
+
+&pcie1 {
+	resets = <&bcm_reset 7>, <&bcm_reset 43>, <&pcie_rescal>, <&scmi_reset 20>;
+	reset-names = "swinit", "bridge", "rescal", "scmi";
+};
+
+&rmem {
+	/* reserved region for scmi channels*/
+	scmi_memory: linux,scmi_mem@3fc0000 {
+		no-map;
+		reg = <0x0 0x3fc0000 0x10000>;
+	};
+};
+
